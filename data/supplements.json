@@ -1,0 +1,310 @@
+{
+  "_note": "전 제품·브랜드·리뷰는 데모용 허구입니다. 실제 제품/효능/의학적 주장이 아닙니다. 성분 함량은 규칙 엔진 시연용 예시값입니다.",
+  "brands": ["Medix", "뉴트리원", "데일리랩", "바이탈코어", "그린루트", "퓨어에이지", "오션웰", "라이프핏"],
+  "products": [
+    {
+      "id": "imm-vitc-1000", "name": "메가 비타민C 1000", "brand": "Medix", "purposes": ["면역", "피로"],
+      "price": 15900, "servingPerDay": 1, "form": "정제", "color": "#ff8a3d",
+      "ingredients": [{"name": "비타민 C", "amount": 1000, "unit": "mg"}, {"name": "아연", "amount": 5, "unit": "mg"}],
+      "usage": "1일 1정, 식후 물과 함께 섭취", "caution": "위장이 약한 경우 식후 섭취 권장. 신장 질환자 주의.",
+      "rating": 4.6, "reviewCount": 214,
+      "reviews": [{"user": "면역러버", "score": 5, "text": "환절기에 챙겨 먹으니 든든해요."}, {"user": "직장인K", "score": 4, "text": "가성비 좋음."}]
+    },
+    {
+      "id": "imm-vitd3-2000", "name": "선샤인 비타민D3 2000IU", "brand": "뉴트리원", "purposes": ["면역", "관절"],
+      "price": 12000, "servingPerDay": 1, "form": "소프트젤", "color": "#ffcf3d",
+      "ingredients": [{"name": "비타민 D", "amount": 50, "unit": "mcg"}],
+      "usage": "1일 1캡슐, 지방이 포함된 식사와 함께", "caution": "고칼슘혈증 환자 주의. 다른 비타민D 제품과 중복 주의.",
+      "rating": 4.7, "reviewCount": 389,
+      "reviews": [{"user": "실내파", "score": 5, "text": "햇빛 부족한데 딱이에요."}]
+    },
+    {
+      "id": "imm-zinc-15", "name": "아연 밸런스 15", "brand": "데일리랩", "purposes": ["면역"],
+      "price": 9800, "servingPerDay": 1, "form": "정제", "color": "#9aa7b0",
+      "ingredients": [{"name": "아연", "amount": 15, "unit": "mg"}, {"name": "셀레늄", "amount": 55, "unit": "mcg"}],
+      "usage": "1일 1정, 식후 섭취", "caution": "공복 섭취 시 메스꺼움 가능. 구리 결핍 유발 가능하니 장기 고용량 주의.",
+      "rating": 4.4, "reviewCount": 121,
+      "reviews": [{"user": "헬스초보", "score": 4, "text": "피부 컨디션 좋아진 느낌."}]
+    },
+    {
+      "id": "imm-elder", "name": "엘더베리 이뮨 시럽", "brand": "그린루트", "purposes": ["면역"],
+      "price": 19500, "servingPerDay": 2, "form": "시럽", "color": "#7b2d5e",
+      "ingredients": [{"name": "엘더베리", "amount": 600, "unit": "mg"}, {"name": "비타민 C", "amount": 200, "unit": "mg"}],
+      "usage": "1일 2회, 1회 10ml", "caution": "당 함유. 당뇨 환자 섭취량 확인.",
+      "rating": 4.3, "reviewCount": 76,
+      "reviews": [{"user": "두아이맘", "score": 5, "text": "아이도 잘 먹어요(가족 공용)."}]
+    },
+    {
+      "id": "imm-propolis", "name": "프로폴리스 스프레이", "brand": "퓨어에이지", "purposes": ["면역"],
+      "price": 22000, "servingPerDay": 3, "form": "스프레이", "color": "#c58a1a",
+      "ingredients": [{"name": "프로폴리스", "amount": 500, "unit": "mg"}],
+      "usage": "1일 2~3회, 입안에 분사", "caution": "벌 제품 알레르기 주의.",
+      "rating": 4.5, "reviewCount": 143,
+      "reviews": [{"user": "목아픔", "score": 5, "text": "목이 칼칼할 때 좋아요."}]
+    },
+    {
+      "id": "imm-betaglucan", "name": "베타글루칸 가드", "brand": "바이탈코어", "purposes": ["면역"],
+      "price": 26900, "servingPerDay": 1, "form": "캡슐", "color": "#e0d3a8",
+      "ingredients": [{"name": "베타글루칸", "amount": 250, "unit": "mg"}, {"name": "비타민 D", "amount": 25, "unit": "mcg"}],
+      "usage": "1일 1캡슐, 아침 식후", "caution": "다른 비타민D 제품과 중복 섭취 주의.",
+      "rating": 4.2, "reviewCount": 58,
+      "reviews": [{"user": "환절기", "score": 4, "text": "감기 빈도가 준 것 같아요."}]
+    },
+    {
+      "id": "fat-bcomplex", "name": "액티브 비타민B 컴플렉스", "brand": "Medix", "purposes": ["피로"],
+      "price": 13900, "servingPerDay": 1, "form": "정제", "color": "#ff5d73",
+      "ingredients": [{"name": "비타민 B1", "amount": 50, "unit": "mg"}, {"name": "비타민 B2", "amount": 50, "unit": "mg"}, {"name": "비타민 B6", "amount": 25, "unit": "mg"}, {"name": "비타민 B12", "amount": 500, "unit": "mcg"}],
+      "usage": "1일 1정, 아침 식후", "caution": "소변이 노랗게 변할 수 있음(정상). 저녁 섭취 시 각성 가능.",
+      "rating": 4.6, "reviewCount": 302,
+      "reviews": [{"user": "야근족", "score": 5, "text": "오후 피로가 덜해요."}]
+    },
+    {
+      "id": "fat-coq10", "name": "코엔자임Q10 100", "brand": "바이탈코어", "purposes": ["피로"],
+      "price": 24900, "servingPerDay": 1, "form": "소프트젤", "color": "#f2a900",
+      "ingredients": [{"name": "코엔자임Q10", "amount": 100, "unit": "mg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "혈압약·항응고제 복용 시 전문가 상담.",
+      "rating": 4.5, "reviewCount": 167,
+      "reviews": [{"user": "40대", "score": 5, "text": "활력에 도움 되는 느낌."}]
+    },
+    {
+      "id": "fat-mag-400", "name": "마그네슘 400", "brand": "데일리랩", "purposes": ["피로", "수면"],
+      "price": 11900, "servingPerDay": 1, "form": "정제", "color": "#6c8ebf",
+      "ingredients": [{"name": "마그네슘", "amount": 400, "unit": "mg"}],
+      "usage": "1일 1정, 저녁 식후", "caution": "과다 섭취 시 설사 가능. 신장 질환자 주의.",
+      "rating": 4.7, "reviewCount": 421,
+      "reviews": [{"user": "눈떨림", "score": 5, "text": "눈밑 떨림이 줄었어요."}]
+    },
+    {
+      "id": "fat-redginseng", "name": "홍삼 에브리데이", "brand": "그린루트", "purposes": ["피로", "면역"],
+      "price": 29900, "servingPerDay": 2, "form": "스틱", "color": "#a83232",
+      "ingredients": [{"name": "홍삼", "amount": 2000, "unit": "mg"}],
+      "usage": "1일 1~2포, 물 없이 섭취 가능", "caution": "혈압·혈당 관리 중이면 상담. 카페인 민감자 저녁 주의.",
+      "rating": 4.4, "reviewCount": 233,
+      "reviews": [{"user": "환절기", "score": 4, "text": "기력에 좋아요."}]
+    },
+    {
+      "id": "fat-iron-plus", "name": "철분 플러스 엽산", "brand": "퓨어에이지", "purposes": ["피로"],
+      "price": 12900, "servingPerDay": 1, "form": "캡슐", "color": "#8a5a44",
+      "ingredients": [{"name": "철분", "amount": 24, "unit": "mg"}, {"name": "엽산", "amount": 400, "unit": "mcg"}, {"name": "비타민 C", "amount": 100, "unit": "mg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "칼슘·아연과 동시 섭취 시 흡수 저하. 변비·흑변 가능.",
+      "rating": 4.3, "reviewCount": 189,
+      "reviews": [{"user": "빈혈끼", "score": 4, "text": "어지럼이 나아진 듯."}]
+    },
+    {
+      "id": "fat-multi", "name": "데일리 멀티비타민", "brand": "라이프핏", "purposes": ["피로", "면역", "눈"],
+      "price": 18900, "servingPerDay": 1, "form": "정제", "color": "#e07a3f",
+      "ingredients": [{"name": "비타민 C", "amount": 100, "unit": "mg"}, {"name": "비타민 D", "amount": 10, "unit": "mcg"}, {"name": "아연", "amount": 8, "unit": "mg"}, {"name": "비타민 B6", "amount": 2, "unit": "mg"}, {"name": "루테인", "amount": 4, "unit": "mg"}],
+      "usage": "1일 1정, 아침 식후", "caution": "개별 단일 제품과 중복 시 성분 과다 주의.",
+      "rating": 4.5, "reviewCount": 512,
+      "reviews": [{"user": "귀차니스트", "score": 5, "text": "하나로 끝나서 편해요."}]
+    },
+    {
+      "id": "sleep-theanine", "name": "L-테아닌 릴랙스 200", "brand": "데일리랩", "purposes": ["수면"],
+      "price": 16900, "servingPerDay": 1, "form": "캡슐", "color": "#5b7a9d",
+      "ingredients": [{"name": "L-테아닌", "amount": 200, "unit": "mg"}],
+      "usage": "취침 30~60분 전 1캡슐", "caution": "저혈압 시 주의.",
+      "rating": 4.6, "reviewCount": 198,
+      "reviews": [{"user": "예민러", "score": 5, "text": "잠들기가 편해졌어요."}]
+    },
+    {
+      "id": "sleep-melatonin", "name": "굿나잇 멜라토닌 3", "brand": "오션웰", "purposes": ["수면"],
+      "price": 14900, "servingPerDay": 1, "form": "정제", "color": "#3d4a7a",
+      "ingredients": [{"name": "멜라토닌", "amount": 3, "unit": "mg"}],
+      "usage": "취침 1시간 전 1정", "caution": "운전·기계조작 전 금지. 임산부·수유부 금지. 자가면역질환 주의.",
+      "rating": 4.4, "reviewCount": 276,
+      "reviews": [{"user": "시차적응", "score": 5, "text": "해외 출장 때 필수."}]
+    },
+    {
+      "id": "sleep-gaba", "name": "GABA 나이트 블렌드", "brand": "그린루트", "purposes": ["수면"],
+      "price": 18900, "servingPerDay": 1, "form": "캡슐", "color": "#4a5d8a",
+      "ingredients": [{"name": "GABA", "amount": 300, "unit": "mg"}, {"name": "L-테아닌", "amount": 100, "unit": "mg"}],
+      "usage": "취침 전 1캡슐", "caution": "테아닌 함유 제품과 중복 주의.",
+      "rating": 4.3, "reviewCount": 92,
+      "reviews": [{"user": "불면", "score": 4, "text": "마음이 차분해져요."}]
+    },
+    {
+      "id": "sleep-mag-glycinate", "name": "마그네슘 글리시네이트 슬립", "brand": "바이탈코어", "purposes": ["수면", "피로"],
+      "price": 17900, "servingPerDay": 1, "form": "캡슐", "color": "#5566a8",
+      "ingredients": [{"name": "마그네슘", "amount": 300, "unit": "mg"}],
+      "usage": "취침 전 1캡슐", "caution": "다른 마그네슘 제품과 중복 섭취 시 과다 주의.",
+      "rating": 4.7, "reviewCount": 254,
+      "reviews": [{"user": "숙면원함", "score": 5, "text": "속 편하고 잠도 잘 와요."}]
+    },
+    {
+      "id": "sleep-lactium", "name": "락티움 스트레스 케어", "brand": "퓨어에이지", "purposes": ["수면"],
+      "price": 23900, "servingPerDay": 1, "form": "정제", "color": "#6a5d9d",
+      "ingredients": [{"name": "락티움", "amount": 150, "unit": "mg"}],
+      "usage": "취침 전 또는 스트레스 시 1정", "caution": "우유 단백 유래. 유단백 알레르기 주의.",
+      "rating": 4.2, "reviewCount": 61,
+      "reviews": [{"user": "스트레스", "score": 4, "text": "긴장 완화에 좋아요."}]
+    },
+    {
+      "id": "sleep-tryptophan", "name": "트립토판 드림", "brand": "오션웰", "purposes": ["수면"],
+      "price": 19900, "servingPerDay": 1, "form": "캡슐", "color": "#2f3d66",
+      "ingredients": [{"name": "트립토판", "amount": 500, "unit": "mg"}, {"name": "비타민 B6", "amount": 10, "unit": "mg"}],
+      "usage": "취침 1시간 전 1캡슐", "caution": "항우울제(SSRI) 복용 시 전문가 상담 필수.",
+      "rating": 4.1, "reviewCount": 47,
+      "reviews": [{"user": "야행성", "score": 4, "text": "수면 리듬 잡는 데 도움."}]
+    },
+    {
+      "id": "joint-glucosamine", "name": "글루코사민 1500", "brand": "Medix", "purposes": ["관절"],
+      "price": 21900, "servingPerDay": 1, "form": "정제", "color": "#8bb04a",
+      "ingredients": [{"name": "글루코사민", "amount": 1500, "unit": "mg"}],
+      "usage": "1일 1정, 식후", "caution": "갑각류 알레르기 주의. 혈당 관리 중 주의.",
+      "rating": 4.5, "reviewCount": 341,
+      "reviews": [{"user": "등산맘", "score": 5, "text": "무릎이 한결 편해요."}]
+    },
+    {
+      "id": "joint-chondroitin", "name": "콘드로이친 콤플렉스", "brand": "뉴트리원", "purposes": ["관절"],
+      "price": 26900, "servingPerDay": 2, "form": "정제", "color": "#6f9f3a",
+      "ingredients": [{"name": "콘드로이친", "amount": 600, "unit": "mg"}, {"name": "글루코사민", "amount": 750, "unit": "mg"}],
+      "usage": "1일 2정(아침·저녁)", "caution": "항응고제 복용 시 상담. 글루코사민 중복 주의.",
+      "rating": 4.4, "reviewCount": 156,
+      "reviews": [{"user": "관절러", "score": 4, "text": "계단 오를 때 편해졌어요."}]
+    },
+    {
+      "id": "joint-msm", "name": "MSM 조인트 1000", "brand": "데일리랩", "purposes": ["관절"],
+      "price": 15900, "servingPerDay": 2, "form": "정제", "color": "#a7c26a",
+      "ingredients": [{"name": "MSM", "amount": 1000, "unit": "mg"}],
+      "usage": "1일 2정", "caution": "위장 불편 가능. 수술 예정자 주의.",
+      "rating": 4.3, "reviewCount": 98,
+      "reviews": [{"user": "헬린이", "score": 4, "text": "운동 후 회복에 좋아요."}]
+    },
+    {
+      "id": "joint-boswellia", "name": "보스웰리아 플렉스", "brand": "그린루트", "purposes": ["관절"],
+      "price": 23900, "servingPerDay": 1, "form": "캡슐", "color": "#b8964a",
+      "ingredients": [{"name": "보스웰리아", "amount": 400, "unit": "mg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "임산부 금지. 위장 자극 가능.",
+      "rating": 4.2, "reviewCount": 73,
+      "reviews": [{"user": "관절통", "score": 4, "text": "뻐근함이 줄어요."}]
+    },
+    {
+      "id": "joint-collagen", "name": "관절 콜라겐 UC-II", "brand": "퓨어에이지", "purposes": ["관절"],
+      "price": 28900, "servingPerDay": 1, "form": "캡슐", "color": "#d9b382",
+      "ingredients": [{"name": "콜라겐", "amount": 40, "unit": "mg"}, {"name": "비타민 C", "amount": 80, "unit": "mg"}],
+      "usage": "1일 1캡슐, 공복", "caution": "닭 유래 성분. 알레르기 주의.",
+      "rating": 4.4, "reviewCount": 129,
+      "reviews": [{"user": "요가맘", "score": 5, "text": "유연성에 도움되는 느낌."}]
+    },
+    {
+      "id": "joint-vitd-joint", "name": "관절 비타민D 콤보", "brand": "바이탈코어", "purposes": ["관절", "면역"],
+      "price": 16900, "servingPerDay": 1, "form": "소프트젤", "color": "#c9b048",
+      "ingredients": [{"name": "비타민 D", "amount": 25, "unit": "mcg"}, {"name": "칼슘", "amount": 300, "unit": "mg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "다른 비타민D·칼슘 제품과 중복 주의. 신장결석 병력자 주의.",
+      "rating": 4.3, "reviewCount": 88,
+      "reviews": [{"user": "갱년기", "score": 4, "text": "뼈 건강 챙겨요."}]
+    },
+    {
+      "id": "eye-lutein", "name": "루테인 20 아이케어", "brand": "Medix", "purposes": ["눈"],
+      "price": 19900, "servingPerDay": 1, "form": "소프트젤", "color": "#e0a52c",
+      "ingredients": [{"name": "루테인", "amount": 20, "unit": "mg"}, {"name": "지아잔틴", "amount": 4, "unit": "mg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "흡연자는 베타카로틴 병용 주의. 다른 루테인 제품과 중복 주의.",
+      "rating": 4.6, "reviewCount": 367,
+      "reviews": [{"user": "모니터족", "score": 5, "text": "눈이 덜 뻑뻑해요."}]
+    },
+    {
+      "id": "eye-omega3", "name": "알티지 오메가3 눈건강", "brand": "오션웰", "purposes": ["눈", "피로"],
+      "price": 22900, "servingPerDay": 1, "form": "소프트젤", "color": "#2f8fb0",
+      "ingredients": [{"name": "오메가3", "amount": 1000, "unit": "mg"}, {"name": "비타민 D", "amount": 10, "unit": "mcg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "항응고제 복용 시 상담. 어류 알레르기 주의.",
+      "rating": 4.7, "reviewCount": 445,
+      "reviews": [{"user": "안구건조", "score": 5, "text": "건조함이 나아졌어요."}]
+    },
+    {
+      "id": "eye-astax", "name": "아스타잔틴 비전", "brand": "그린루트", "purposes": ["눈"],
+      "price": 24900, "servingPerDay": 1, "form": "캡슐", "color": "#d5442f",
+      "ingredients": [{"name": "아스타잔틴", "amount": 8, "unit": "mg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "호르몬 민감 질환 주의.",
+      "rating": 4.4, "reviewCount": 112,
+      "reviews": [{"user": "게이머", "score": 4, "text": "장시간 화면에도 덜 피곤."}]
+    },
+    {
+      "id": "eye-bilberry", "name": "빌베리 브라이트", "brand": "뉴트리원", "purposes": ["눈"],
+      "price": 17900, "servingPerDay": 1, "form": "정제", "color": "#5a2a6b",
+      "ingredients": [{"name": "빌베리추출물", "amount": 160, "unit": "mg"}, {"name": "루테인", "amount": 6, "unit": "mg"}],
+      "usage": "1일 1정, 식후", "caution": "루테인 제품 중복 주의.",
+      "rating": 4.2, "reviewCount": 64,
+      "reviews": [{"user": "야간운전", "score": 4, "text": "밤 운전이 편해요."}]
+    },
+    {
+      "id": "eye-vita", "name": "아이 비타민A 콤플렉스", "brand": "라이프핏", "purposes": ["눈"],
+      "price": 13900, "servingPerDay": 1, "form": "정제", "color": "#e8b84a",
+      "ingredients": [{"name": "비타민 A", "amount": 700, "unit": "mcg"}, {"name": "아연", "amount": 5, "unit": "mg"}],
+      "usage": "1일 1정, 식후", "caution": "임산부 고용량 비타민A 금지. 다른 비타민A 제품 중복 주의.",
+      "rating": 4.1, "reviewCount": 53,
+      "reviews": [{"user": "건조눈", "score": 4, "text": "무난하게 좋아요."}]
+    },
+    {
+      "id": "eye-lutein-mini", "name": "루테인 미니 10", "brand": "데일리랩", "purposes": ["눈"],
+      "price": 11900, "servingPerDay": 1, "form": "소프트젤", "color": "#f0c04a",
+      "ingredients": [{"name": "루테인", "amount": 10, "unit": "mg"}],
+      "usage": "1일 1캡슐, 식후", "caution": "다른 루테인 제품과 합산 시 상한 주의.",
+      "rating": 4.3, "reviewCount": 87,
+      "reviews": [{"user": "가성비", "score": 4, "text": "부담 없는 함량."}]
+    },
+    {
+      "id": "gut-probio-100", "name": "장건강 프로바이오틱스 100억", "brand": "Medix", "purposes": ["장건강"],
+      "price": 24900, "servingPerDay": 1, "form": "캡슐", "color": "#3faa7a",
+      "ingredients": [{"name": "프로바이오틱스", "amount": 100, "unit": "억CFU"}],
+      "usage": "1일 1캡슐, 공복(아침)", "caution": "면역억제제 복용 시 상담. 냉장 보관 권장.",
+      "rating": 4.7, "reviewCount": 523,
+      "reviews": [{"user": "장트러블", "score": 5, "text": "화장실이 규칙적이 됐어요."}]
+    },
+    {
+      "id": "gut-probio-500", "name": "메가 유산균 500억", "brand": "그린루트", "purposes": ["장건강"],
+      "price": 34900, "servingPerDay": 1, "form": "캡슐", "color": "#2e8f66",
+      "ingredients": [{"name": "프로바이오틱스", "amount": 500, "unit": "억CFU"}, {"name": "이눌린", "amount": 1, "unit": "g"}],
+      "usage": "1일 1캡슐, 공복", "caution": "고함량. 초기 가스·팽만 가능. 유산균 제품 중복 주의.",
+      "rating": 4.6, "reviewCount": 201,
+      "reviews": [{"user": "예민장", "score": 5, "text": "확실히 편해졌어요."}]
+    },
+    {
+      "id": "gut-prebio", "name": "프리바이오틱스 화이버", "brand": "뉴트리원", "purposes": ["장건강"],
+      "price": 15900, "servingPerDay": 1, "form": "분말", "color": "#8fbf6a",
+      "ingredients": [{"name": "이눌린", "amount": 5, "unit": "g"}, {"name": "식이섬유", "amount": 3, "unit": "g"}],
+      "usage": "1일 1포, 물에 타서", "caution": "과다 시 복부 팽만. 수분 충분히.",
+      "rating": 4.3, "reviewCount": 96,
+      "reviews": [{"user": "변비탈출", "score": 4, "text": "부드럽게 도움돼요."}]
+    },
+    {
+      "id": "gut-glutamine", "name": "L-글루타민 거트리페어", "brand": "바이탈코어", "purposes": ["장건강"],
+      "price": 21900, "servingPerDay": 2, "form": "분말", "color": "#5aa38a",
+      "ingredients": [{"name": "L-글루타민", "amount": 3000, "unit": "mg"}],
+      "usage": "1일 2회, 공복", "caution": "간·신장 질환자 상담.",
+      "rating": 4.2, "reviewCount": 54,
+      "reviews": [{"user": "장예민", "score": 4, "text": "속이 편안해요."}]
+    },
+    {
+      "id": "gut-fiber", "name": "데일리 식이섬유 구미", "brand": "라이프핏", "purposes": ["장건강"],
+      "price": 12900, "servingPerDay": 2, "form": "구미", "color": "#6fb04a",
+      "ingredients": [{"name": "식이섬유", "amount": 5, "unit": "g"}],
+      "usage": "1일 2개", "caution": "당 함유. 과다 시 설사 가능.",
+      "rating": 4.1, "reviewCount": 71,
+      "reviews": [{"user": "야채부족", "score": 4, "text": "간식처럼 챙겨요."}]
+    },
+    {
+      "id": "gut-probio-vitd", "name": "장+면역 유산균D", "brand": "퓨어에이지", "purposes": ["장건강", "면역"],
+      "price": 27900, "servingPerDay": 1, "form": "캡슐", "color": "#3a9f8c",
+      "ingredients": [{"name": "프로바이오틱스", "amount": 150, "unit": "억CFU"}, {"name": "비타민 D", "amount": 25, "unit": "mcg"}],
+      "usage": "1일 1캡슐, 아침 공복", "caution": "다른 비타민D·유산균 제품 중복 주의.",
+      "rating": 4.5, "reviewCount": 134,
+      "reviews": [{"user": "환절기장", "score": 5, "text": "장·면역 한 번에."}]
+    },
+    {
+      "id": "multi-omega-mag", "name": "리커버리 오메가+마그네슘", "brand": "오션웰", "purposes": ["피로", "수면"],
+      "price": 25900, "servingPerDay": 1, "form": "소프트젤", "color": "#4b86a8",
+      "ingredients": [{"name": "오메가3", "amount": 800, "unit": "mg"}, {"name": "마그네슘", "amount": 150, "unit": "mg"}],
+      "usage": "1일 1캡슐, 저녁 식후", "caution": "다른 마그네슘·오메가3 제품과 중복 주의.",
+      "rating": 4.4, "reviewCount": 110,
+      "reviews": [{"user": "회복러", "score": 4, "text": "저녁에 챙기기 좋아요."}]
+    },
+    {
+      "id": "imm-vitc-mini", "name": "비타민C 미니 500", "brand": "라이프핏", "purposes": ["면역", "피로"],
+      "price": 8900, "servingPerDay": 1, "form": "정제", "color": "#ffab5e",
+      "ingredients": [{"name": "비타민 C", "amount": 500, "unit": "mg"}],
+      "usage": "1일 1정, 식후", "caution": "다른 비타민C 제품과 합산 시 상한 주의.",
+      "rating": 4.4, "reviewCount": 145,
+      "reviews": [{"user": "저용량선호", "score": 4, "text": "부담 없어요."}]
+    }
+  ]
+}

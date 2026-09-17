@@ -1,0 +1,19 @@
+# deps / build
+node_modules/
+dist/
+build/
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# env
+.env
+.env.local
