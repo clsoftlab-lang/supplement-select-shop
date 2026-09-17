@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CLSOFTLAB (씨엘소프트랩), Dr. Lee Il-guk (이일국)
+#
+# server/wrangler.toml — Cloudflare Workers 배포 설정 (무인·무료 호스팅)
+#
+# 배포:
+#   npm i -g wrangler
+#   wrangler secret put ANTHROPIC_API_KEY   # 키는 Worker 시크릿에만 저장
+#   wrangler deploy
+# 그런 다음 정적 사이트의 ai/config.js 에서:
+#   export const AI_ENDPOINT = "https://medix-ai-proxy.<계정>.workers.dev/api/ai";
+#
+# 🔒 ANTHROPIC_API_KEY 는 절대 이 파일이나 [vars] 에 두지 않습니다(시크릿으로만).
+
+name = "medix-ai-proxy"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# 비용/모델 튜닝(선택). 키는 여기 두지 말고 `wrangler secret put` 으로만 설정하세요.
+[vars]
+AI_MODEL = "claude-haiku-4-5"        # 상향: claude-sonnet-5 / claude-opus-5
+AI_MONTHLY_TOKEN_CAP = "2000000"     # 월 토큰 예산(초과 시 429 {fallback:true})
+AI_RATE_PER_MIN = "20"               # IP 당 분당 요청 제한
+ALLOWED_ORIGIN = "*"                 # 운영 시 정적 사이트 출처로 제한 권장
+# AI_EFFORT = "low"                  # Haiku 외 모델에서만 적용

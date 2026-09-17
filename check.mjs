@@ -151,6 +151,7 @@ for (const f of [
   join(ROOT, "ai", "config.js"),
   join(ROOT, "ai", "ai.js"),
   join(ROOT, "server", "index.mjs"),
+  join(ROOT, "server", "worker.js"),
 ]) {
   try {
     execSync(`node --check "${f}"`, { stdio: "pipe" });
@@ -161,20 +162,29 @@ for (const f of [
 // (b) 데모 기본값: AI_ENDPOINT 는 빈 문자열(=내장 Mock 사용)이어야 한다
 assert(AI_ENDPOINT === "", 'AI_ENDPOINT 기본값 빈 문자열("") = Mock 모드');
 
-// (c) 리포지토리 어디에도 실제 키/키 접두사가 없어야 한다
+// (c) 리포지토리 어디에도 "실제" 키가 없어야 한다.
+//     실제 키만 매칭하도록 길이 하한을 두어(20자+), README 의 `sk-ant…` 언급은 오탐하지 않는다.
 //     (self-match 방지를 위해 접두사 문자열을 분할 구성)
-const KEY_PREFIX = "sk-" + "ant";
-const REAL_KEY_RE = new RegExp(KEY_PREFIX + "-[A-Za-z0-9_-]{8,}");
+const REAL_KEY_RE = new RegExp("sk-" + "ant-[A-Za-z0-9_-]{20,}");
 let leaked = null;
 for (const f of files.filter((f) => ![".png", ".jpg", ".jpeg", ".gif", ".ico", ".woff", ".woff2"].includes(extname(f)))) {
   let text;
   try { text = readFileSync(f, "utf8"); } catch { continue; }
-  if (text.includes(KEY_PREFIX) || REAL_KEY_RE.test(text)) {
+  if (REAL_KEY_RE.test(text)) {
     leaked = f.replace(ROOT, "").replace(/\\/g, "/");
     break;
   }
 }
-assert(leaked === null, leaked ? `키 노출 발견: ${leaked}` : `하드코딩된 API 키/접두사 없음`);
+assert(leaked === null, leaked ? `키 노출 발견: ${leaked}` : `하드코딩된 실제 API 키 없음`);
+
+// (d) .gitignore 가 .env 를 제외하고, 실제 .env 파일이 커밋되지 않았어야 한다
+{
+  let gi = "";
+  try { gi = readFileSync(join(ROOT, ".gitignore"), "utf8"); } catch {}
+  assert(/(^|\n)\.env(\s|$)/.test(gi), ".gitignore 가 .env 를 제외");
+  const envCommitted = files.some((f) => /(^|[\\/])\.env$/.test(f));
+  assert(!envCommitted, "실제 .env 파일이 리포지토리에 없음");
+}
 
 // 결과 -----------------------------------------------------------------------
 console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);

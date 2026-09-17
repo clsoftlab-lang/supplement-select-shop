@@ -17,15 +17,66 @@
 //   cd server && npm install
 //   ANTHROPIC_API_KEY=... npm start
 // 그런 다음 ai/config.js 의 AI_ENDPOINT 를 "http://<host>:<port>/api/ai" 로 지정.
+//
+// 💸 비용 최적화(고도화):
+//   - 기본 모델은 비용 우선 claude-haiku-4-5 (환경변수 AI_MODEL 로 교체 가능).
+//     품질을 더 원하면 AI_MODEL=claude-sonnet-5 또는 AI_MODEL=claude-opus-5 로 상향.
+//   - 안정적인 task 별 system 프롬프트는 프롬프트 캐싱(cache_control: ephemeral)으로
+//     반복 호출 비용을 낮춥니다.
+//   - task 별 max_tokens 를 작게(기본 ~700) 두어 출력 비용을 억제합니다.
+//   - IP 당 분당 요청 제한 + 월 토큰 예산(AI_MONTHLY_TOKEN_CAP)으로 폭주 비용을 막고,
+//     초과 시 HTTP 429 {fallback:true} 를 반환해 프런트가 내장 Mock 으로 자동 대체합니다.
 // -----------------------------------------------------------------------------
 
 import http from "node:http";
 import Anthropic from "@anthropic-ai/sdk";
 
 const PORT = Number(process.env.PORT) || 8787;
-const MODEL = "claude-opus-5";
+// 비용 우선 기본 모델. 필요 시 AI_MODEL 로 상향(claude-sonnet-5 / claude-opus-5).
+const MODEL = process.env.AI_MODEL || "claude-haiku-4-5";
+// Haiku 4.5 는 adaptive thinking / effort 를 받지 않는다(400 방지) → 모델별 분기에 사용.
+const IS_HAIKU = MODEL.startsWith("claude-haiku");
 // CORS: 정적 사이트 출처. 기본은 개발 편의를 위한 "*" (운영 시 특정 출처로 제한 권장).
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
+
+// ---- 비용 가드레일 -----------------------------------------------------------
+// task 별 출력 상한(작게 유지, 정말 필요한 곳만 상향).
+const MAX_TOKENS = { chat: 700, stack: 800, interactions: 700 };
+const DEFAULT_MAX_TOKENS = 700;
+// IP 당 분당 요청 제한(간단한 인메모리 슬라이딩 윈도).
+const RATE_PER_MIN = Number(process.env.AI_RATE_PER_MIN) || 20;
+const rateHits = new Map(); // ip -> number[] (요청 타임스탬프)
+function rateLimited(ip) {
+  const now = Date.now();
+  const arr = (rateHits.get(ip) || []).filter((t) => now - t < 60_000);
+  if (arr.length >= RATE_PER_MIN) {
+    rateHits.set(ip, arr);
+    return true;
+  }
+  arr.push(now);
+  rateHits.set(ip, arr);
+  return false;
+}
+// 월 토큰 예산(스트림 최종 usage 를 누적, 달이 바뀌면 리셋).
+const MONTHLY_TOKEN_CAP = Number(process.env.AI_MONTHLY_TOKEN_CAP) || 2_000_000;
+let usedTokens = 0;
+let usageMonth = new Date().getUTCMonth();
+function budgetExceeded() {
+  const m = new Date().getUTCMonth();
+  if (m !== usageMonth) {
+    usageMonth = m;
+    usedTokens = 0;
+  }
+  return usedTokens >= MONTHLY_TOKEN_CAP;
+}
+function addUsage(u) {
+  if (!u) return;
+  usedTokens +=
+    (u.input_tokens || 0) +
+    (u.output_tokens || 0) +
+    (u.cache_creation_input_tokens || 0) +
+    (u.cache_read_input_tokens || 0);
+}
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error(
@@ -115,11 +166,24 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "GET" && req.url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-    return res.end(JSON.stringify({ ok: true, model: MODEL }));
+    return res.end(
+      JSON.stringify({ ok: true, model: MODEL, usedTokens, cap: MONTHLY_TOKEN_CAP })
+    );
   }
   if (req.method !== "POST" || (req.url || "").split("?")[0] !== "/api/ai") {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     return res.end("Not Found");
+  }
+
+  // 비용 가드레일: 분당 요청 제한 / 월 토큰 예산 초과 → 429 {fallback:true}
+  // (프런트는 이 신호를 받으면 내장 Mock 으로 자동 대체하여 서비스가 끊기지 않는다.)
+  const ip =
+    (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
+    req.socket.remoteAddress ||
+    "unknown";
+  if (rateLimited(ip) || budgetExceeded()) {
+    res.writeHead(429, { "Content-Type": "application/json; charset=utf-8" });
+    return res.end(JSON.stringify({ fallback: true }));
   }
 
   let task, payload;
@@ -140,15 +204,23 @@ const server = http.createServer(async (req, res) => {
       "Cache-Control": "no-store",
     });
     // 스트리밍: 긴 입력/출력에서도 타임아웃을 피하고 토큰을 즉시 흘려보낸다.
-    const stream = client.messages.stream({
+    const params = {
       model: MODEL,
-      max_tokens: 2048,
-      thinking: { type: "adaptive" },
-      system,
+      max_tokens: MAX_TOKENS[task] || DEFAULT_MAX_TOKENS,
+      // 프롬프트 캐싱: 안정적인 task 별 system 프롬프트를 캐시 블록으로 전송 →
+      // 반복 호출 시 캐시 읽기로 비용 절감.
+      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: user }],
-    });
+    };
+    // Haiku 4.5 는 adaptive thinking / effort 를 받지 않는다(400 방지).
+    if (!IS_HAIKU) {
+      params.thinking = { type: "adaptive" };
+      params.output_config = { effort: process.env.AI_EFFORT || "low" };
+    }
+    const stream = client.messages.stream(params);
     stream.on("text", (delta) => res.write(delta));
-    await stream.finalMessage();
+    const finalMsg = await stream.finalMessage();
+    addUsage(finalMsg && finalMsg.usage); // 월 예산 누적
     res.end();
   } catch (err) {
     console.error("[server] Claude 호출 실패:", err);

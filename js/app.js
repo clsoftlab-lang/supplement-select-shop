@@ -177,6 +177,19 @@ function renderCatalog(main) {
   const list = filteredProducts();
   main.innerHTML = `
   <section id="view-catalog">
+    ${
+      digestDismissedToday()
+        ? ""
+        : `<div id="daily-digest" class="daily-digest panel" role="region" aria-label="오늘의 맞춤 영양 추천">
+      <div class="digest-head">
+        <h2>🗓️ 오늘의 맞춤 영양 추천 + 주의사항</h2>
+        <button class="icon-btn" id="digest-close" aria-label="오늘 그만 보기" title="오늘 그만 보기">✕</button>
+      </div>
+      <p class="fine">앱이 오늘의 목적에 맞춰 자동으로 추천을 준비했어요. 규칙 엔진 + AI 설명 기반이며 <b>의학적 조언이 아닙니다 — 복용 전 전문가와 상담하세요</b>.</p>
+      <div id="digest-rec" class="ai-out" aria-live="polite">오늘의 추천을 준비하고 있어요…</div>
+      <div id="digest-caution" class="ai-out" aria-live="polite">주의사항을 확인하고 있어요…</div>
+    </div>`
+    }
     <div class="filters" role="region" aria-label="필터">
       <input id="q" class="input" type="search" placeholder="제품·브랜드·성분 검색" value="${esc(f.q)}" />
       <div class="chips" role="group" aria-label="목적">
@@ -230,6 +243,18 @@ function renderCatalog(main) {
       refreshGrid();
     })
   );
+
+  // 무인 기능: 오늘의 맞춤 추천을 자동 생성(오늘 닫았으면 생략)
+  const digest = $("#daily-digest");
+  if (digest) {
+    const closeBtn = $("#digest-close");
+    if (closeBtn)
+      closeBtn.addEventListener("click", () => {
+        store.save(DIGEST_KEY, todayStr());
+        digest.remove();
+      });
+    runDailyDigest();
+  }
 }
 
 function refreshGrid() {
@@ -239,6 +264,38 @@ function refreshGrid() {
   grid.innerHTML = list.map(productCard).join("") || '<p class="empty">조건에 맞는 제품이 없어요.</p>';
   const c = $(".count");
   if (c) c.textContent = `${list.length}개 제품`;
+}
+
+// -------------------------------------------------- 오늘의 맞춤 영양 추천(무인)
+// 카탈로그 진입 시 자동으로 "오늘의 맞춤 영양 추천 + 주의사항"을 생성한다.
+// recommender/interactions 엔진 + askAI(STACK/INTERACTIONS)를 재사용하므로
+// 오프라인 Mock 으로도 동작하고, 실 프록시 연결 시엔 Claude 설명으로 바뀐다.
+const DIGEST_KEY = "digestDismissed";
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const digestDismissedToday = () => store.load(DIGEST_KEY, "") === todayStr();
+
+// 설문이 있으면 그 목적으로, 없으면 날짜 기반으로 '오늘의' 목적을 회전 선택.
+function dailySurvey() {
+  if (state.survey && (state.survey.goals || []).length) return state.survey;
+  const idx = new Date().getDate() % PURPOSES.length;
+  return { age: 0, gender: "other", goals: [PURPOSES[idx]], taking: [] };
+}
+
+async function runDailyDigest() {
+  const recEl = $("#digest-rec");
+  const cautEl = $("#digest-caution");
+  if (!recEl || !cautEl) return;
+  const survey = dailySurvey();
+  const { picks } = recommend(survey, state.products, { max: 3 });
+  // (1) 오늘의 추천 설명 — recommender 엔진 + askAI(STACK)
+  await runAiInto(TASKS.STACK, { survey, products: state.products }, recEl);
+  // (2) 추천 조합의 주의사항 — interactions 엔진 + askAI(INTERACTIONS)
+  const pickProducts = picks.map((x) => ({ ...x.product, qty: 1 }));
+  await runAiInto(
+    TASKS.INTERACTIONS,
+    { cartProducts: pickProducts, nutrients: state.nutrients },
+    cautEl
+  );
 }
 
 // ---------------------------------------------------------------- 게이지

@@ -25,9 +25,16 @@ Copyright 2026 CLSOFTLAB (씨엘소프트랩), Dr. Lee Il-guk (이일국)
 ```
 
 - 엔드포인트: `POST /api/ai`  (본문: `{"task": "...", "payload": {...}}`)
-- 헬스체크: `GET /health` → `{"ok":true,"model":"claude-opus-5"}`
+- 헬스체크: `GET /health` → `{"ok":true,"model":"claude-haiku-4-5", ...}`
 - 응답: `text/plain` 스트리밍 (토큰이 생성되는 대로 흘려보냄)
-- 모델: `claude-opus-5` · `max_tokens: 2048` · `thinking: {type:"adaptive"}` · 스트리밍
+- 모델: 기본 **`claude-haiku-4-5`**(비용 우선, `AI_MODEL` 로 상향) · task 별 `max_tokens`(~700) ·
+  프롬프트 캐싱(`cache_control: ephemeral`) · 스트리밍
+  - Haiku 4.5 는 adaptive thinking / effort 를 받지 않으므로(400 방지) 해당 파라미터를 보내지
+    않습니다. `claude-sonnet-5` / `claude-opus-5` 등에서는 `thinking:{type:"adaptive"}` +
+    `output_config:{effort}` 를 전송합니다.
+- 비용 가드레일: IP 당 분당 요청 제한(`AI_RATE_PER_MIN`, 기본 20) + 월 토큰 예산
+  (`AI_MONTHLY_TOKEN_CAP`, 기본 2,000,000). 초과 시 **HTTP 429 `{fallback:true}`** 반환 →
+  프런트가 내장 Mock 으로 자동 대체.
 - 지원 task: `chat`(영양 상담), `stack`(맞춤 스택 설명), `interactions`(성분 상호작용 설명)
 
 ## 배포 / 실행 (운영자 전용)
@@ -53,8 +60,33 @@ export const AI_ENDPOINT = "https://your-proxy.example.com/api/ai";
 | 변수 | 필수 | 기본값 | 설명 |
 |------|------|--------|------|
 | `ANTHROPIC_API_KEY` | ✅ | — | **서버 측** API 키. 브라우저/리포지토리에 두지 말 것 |
+| `AI_MODEL` | ❌ | `claude-haiku-4-5` | 비용 우선 기본. 상향: `claude-sonnet-5` / `claude-opus-5` |
+| `AI_EFFORT` | ❌ | `low` | Haiku 외 모델에서만 `output_config.effort` 로 전송 |
+| `AI_MONTHLY_TOKEN_CAP` | ❌ | `2000000` | 월 토큰 예산. 초과 시 429 `{fallback:true}` |
+| `AI_RATE_PER_MIN` | ❌ | `20` | IP 당 분당 요청 제한 |
 | `PORT` | ❌ | `8787` | 프록시 포트 |
 | `ALLOWED_ORIGIN` | ❌ | `*` | CORS 허용 출처(운영 시 정적 사이트 출처로 제한 권장) |
+
+## Cloudflare Workers 배포 (무인·무료 티어)
+
+서버를 직접 운영하지 않으려면 동일한 로직의 **Workers 변형**(`worker.js` + `wrangler.toml`)을
+무료 티어에 배포하세요. Anthropic REST(`/v1/messages`)를 직접 호출하며 규칙은 동일합니다.
+
+```bash
+cd server
+npm i -g wrangler
+wrangler secret put ANTHROPIC_API_KEY   # 키는 Worker 시크릿에만 저장(브라우저/리포지토리 금지)
+wrangler deploy
+```
+
+배포 후 정적 사이트의 `ai/config.js` 에서:
+
+```js
+export const AI_ENDPOINT = "https://medix-ai-proxy.<계정>.workers.dev/api/ai";
+```
+
+모델·예산·요청 제한은 `wrangler.toml` 의 `[vars]` 로 조정합니다(키는 시크릿으로만 설정).
+호출이 실패하거나 429 `{fallback:true}` 이면 프런트가 내장 Mock 으로 자동 대체합니다.
 
 ## 보안 원칙
 

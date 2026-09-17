@@ -102,13 +102,57 @@ ANTHROPIC_API_KEY=... npm start
 export const AI_ENDPOINT = "https://your-proxy.example.com/api/ai";
 ```
 
-The proxy uses `@anthropic-ai/sdk` with model **`claude-opus-5`**, adaptive thinking, and
-streaming (`server/index.mjs`).
+The proxy uses `@anthropic-ai/sdk` with a **cost-first default model `claude-haiku-4-5`**
+(configurable via `AI_MODEL`), prompt caching, output caps, and streaming (`server/index.mjs`).
+See **[⚙️ 고도화 — 무인·저비용 실 AI 연동](#️-고도화--무인저비용-실-ai-연동)** below.
 
 > **🔒 KEYS ARE SERVER-SIDE ONLY.** The API key lives **only** in the proxy's
 > `ANTHROPIC_API_KEY` environment variable — never in the browser, the static bundle, a URL,
 > or this repository. `check.mjs` enforces that no key is committed. Do **not** run the proxy
 > inside this repo/CI (CI only runs `node --check` on it — no API calls).
+
+## ⚙️ 고도화 — 무인·저비용 실 AI 연동
+
+Medix ships a **cost-efficient, autonomous** real-AI path. The site never breaks: if the proxy
+is unset, over budget, or unreachable, it **auto-falls back to the built-in mock**.
+
+### Cost model (default)
+
+- **Default model `claude-haiku-4-5`** (~**$1 / $5 per MTok** input/output) — set `AI_MODEL` to
+  `claude-sonnet-5` or `claude-opus-5` for higher quality when needed.
+- **Prompt caching** — the stable per-task system prompt is sent as a `cache_control: ephemeral`
+  block, so repeated calls read the cache and cost less.
+- **Output caps** — modest per-task `max_tokens` (~700 default).
+- **Cost guardrails** — in-memory per-IP rate limit (20/min) + a monthly token budget
+  (`AI_MONTHLY_TOKEN_CAP`, default 2,000,000). When exceeded the proxy returns HTTP 429
+  `{fallback:true}` and the browser silently uses the mock.
+
+**Rough estimate:** a short grounded reply is on the order of ~1.5K input + ~0.4K output tokens.
+At Haiku 4.5 that is roughly **~$0.004 per request**, i.e. on the order of **~$4 per 1,000
+requests** — before prompt-cache savings on the repeated system prompt, which push it lower.
+(Estimate only; actual usage varies with input size and model.)
+
+### Autonomous ("무인") — free hosting + never-breaks
+
+- **Cloudflare Workers one-deploy** (`server/worker.js` + `server/wrangler.toml`): free tier,
+  **no server to babysit**. Calls the Anthropic REST API with the same task routing, model, and
+  caching rules; the key lives only in the Worker secret:
+  ```bash
+  cd server
+  npm i -g wrangler
+  wrangler secret put ANTHROPIC_API_KEY   # key stays server-side (a Worker secret)
+  wrangler deploy
+  # then set ai/config.js → AI_ENDPOINT = "https://medix-ai-proxy.<acct>.workers.dev/api/ai"
+  ```
+- **Automatic mock fallback** (`ai/ai.js`): on a failed call / 429 `{fallback:true}` / network
+  error, the app falls back to the offline mock, streaming preserved — so it keeps working unmanned.
+
+### On-load autonomous digest (works offline via the mock)
+
+The catalog auto-generates **"오늘의 맞춤 영양 추천 + 주의사항"** on load — today's goal-based
+recommendation plus a caution check, built from the existing `recommender.js` / `interactions.js`
+engines via `askAI`. It works offline through the mock, is dismissible for the day, and is labeled
+**NOT medical advice — consult a professional.**
 
 ## Run locally
 

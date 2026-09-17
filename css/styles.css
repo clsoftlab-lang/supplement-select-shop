@@ -210,6 +210,11 @@ h2 { font-size: 1.15rem; margin: .2em 0 .6em; }
   border-radius: 10px; font-size: .95rem; line-height: 1.6;
 }
 .ai-streaming::after { content: "▍"; color: var(--accent); animation: ai-blink 1s steps(2) infinite; }
+/* 오늘의 맞춤 추천(무인) */
+.daily-digest { border-left: 3px solid var(--brand); margin-bottom: 16px; }
+.digest-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.digest-head h2 { margin: 0; }
+.daily-digest .ai-out { border-left-color: var(--brand); }
 @keyframes ai-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
 .rec-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
 #view-ai .ai-log {

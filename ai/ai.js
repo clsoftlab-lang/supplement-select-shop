@@ -62,7 +62,24 @@ const PURPOSE_KEYWORDS = {
  * @returns {Promise<string>}      최종 전체 텍스트
  */
 export async function askAI(task, payload = {}, { onToken } = {}) {
-  if (AI_ENDPOINT) return callRemote(task, payload, onToken);
+  if (AI_ENDPOINT) {
+    // 무인(autonomous) 자동 폴백: 실 프록시가 실패/429{fallback:true}/네트워크 오류이면
+    // 내장 Mock 으로 대체해 앱이 절대 끊기지 않게 한다. 스트리밍(onToken)은 그대로 유지.
+    // 이미 원격 토큰이 흘러나온 뒤 실패하면 중복 출력을 막기 위해 그대로 오류를 던진다.
+    let emitted = 0;
+    const wrapped = onToken
+      ? (t) => {
+          emitted++;
+          onToken(t);
+        }
+      : undefined;
+    try {
+      return await callRemote(task, payload, wrapped);
+    } catch (e) {
+      if (emitted > 0) throw e; // 부분 스트림 이후 실패 → 중복 방지 위해 오류 전달
+      // 그 외(요청 전/429/네트워크)에는 Mock 으로 자동 대체
+    }
+  }
   const text = mockProvider(task, payload);
   return streamString(text, onToken);
 }

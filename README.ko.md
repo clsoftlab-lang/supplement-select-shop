@@ -96,13 +96,57 @@ ANTHROPIC_API_KEY=... npm start
 export const AI_ENDPOINT = "https://your-proxy.example.com/api/ai";
 ```
 
-프록시는 `@anthropic-ai/sdk`, 모델 **`claude-opus-5`**, adaptive thinking, 스트리밍을
-사용합니다(`server/index.mjs`).
+프록시는 `@anthropic-ai/sdk` 와 **비용 우선 기본 모델 `claude-haiku-4-5`**(환경변수
+`AI_MODEL` 로 교체 가능), 프롬프트 캐싱, 출력 상한, 스트리밍을 사용합니다(`server/index.mjs`).
+자세한 내용은 아래 **[⚙️ 고도화 — 무인·저비용 실 AI 연동](#️-고도화--무인저비용-실-ai-연동)** 참고.
 
 > **🔒 키는 서버 측에만 둡니다.** API 키는 프록시의 `ANTHROPIC_API_KEY` 환경변수에만
 > 존재하며, 브라우저·정적 번들·URL·리포지토리에는 절대 두지 않습니다. `check.mjs`가 키
 > 커밋 여부를 검사합니다. 이 리포지토리/CI 안에서는 프록시를 실행하지 마세요(CI는
 > `node --check` 문법 검사만 하며 API 호출은 없습니다).
+
+## ⚙️ 고도화 — 무인·저비용 실 AI 연동
+
+메딕스는 **저비용·무인** 실 AI 경로를 제공합니다. 프록시가 미설정/예산 초과/접속 불가여도
+**내장 Mock 으로 자동 대체**되어 서비스가 절대 끊기지 않습니다.
+
+### 비용 모델(기본값)
+
+- **기본 모델 `claude-haiku-4-5`**(약 **$1 / $5 per MTok** 입력/출력) — 품질이 더 필요하면
+  `AI_MODEL` 을 `claude-sonnet-5` 또는 `claude-opus-5` 로 상향.
+- **프롬프트 캐싱** — 안정적인 task 별 system 프롬프트를 `cache_control: ephemeral` 블록으로
+  전송해 반복 호출 시 캐시를 읽어 비용을 낮춥니다.
+- **출력 상한** — task 별 `max_tokens` 를 작게(기본 ~700) 유지.
+- **비용 가드레일** — IP 당 분당 요청 제한(20/분) + 월 토큰 예산(`AI_MONTHLY_TOKEN_CAP`,
+  기본 2,000,000). 초과 시 프록시가 HTTP 429 `{fallback:true}` 를 반환하고 브라우저는 조용히
+  Mock 으로 대체합니다.
+
+**대략적 추정:** 짧은 근거 기반 응답은 대략 입력 ~1.5K + 출력 ~0.4K 토큰 수준입니다.
+Haiku 4.5 기준 **요청당 약 $0.004**, 즉 **1,000요청당 약 $4** 수준이며, 반복되는 system
+프롬프트의 캐시 절감까지 반영하면 더 낮아집니다. (실제 비용은 입력 크기·모델에 따라 달라지는
+추정치입니다.)
+
+### 무인(autonomous) — 무료 호스팅 + 무중단
+
+- **Cloudflare Workers 원클릭 배포**(`server/worker.js` + `server/wrangler.toml`): 무료 티어,
+  **관리할 서버 없음**. Anthropic REST API 를 동일한 task 라우팅·모델·캐싱 규칙으로 호출하며,
+  키는 Worker 시크릿에만 존재합니다.
+  ```bash
+  cd server
+  npm i -g wrangler
+  wrangler secret put ANTHROPIC_API_KEY   # 키는 서버 측(Worker 시크릿)에만
+  wrangler deploy
+  # 이후 ai/config.js → AI_ENDPOINT = "https://medix-ai-proxy.<계정>.workers.dev/api/ai"
+  ```
+- **자동 Mock 폴백**(`ai/ai.js`): 호출 실패 / 429 `{fallback:true}` / 네트워크 오류 시
+  오프라인 Mock 으로 대체하며 스트리밍도 유지 → 무인 상태로도 계속 동작합니다.
+
+### 진입 시 자동 다이제스트(Mock 으로 오프라인 동작)
+
+카탈로그 진입 시 **"오늘의 맞춤 영양 추천 + 주의사항"** 을 자동 생성합니다. 오늘의 목적 기반
+추천과 주의사항 점검을 기존 `recommender.js` / `interactions.js` 엔진 + `askAI` 로 구성하며,
+Mock 으로 오프라인에서도 동작하고, 하루 단위로 닫을 수 있으며 **의학적 조언이 아님(전문가 상담
+권고)** 이라고 명시합니다.
 
 ## 로컬 실행
 
