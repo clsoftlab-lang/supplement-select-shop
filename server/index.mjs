@@ -1,0 +1,164 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 CLSOFTLAB (씨엘소프트랩), Dr. Lee Il-guk (이일국)
+//
+// server/index.mjs — 참조용(REFERENCE) AI 프록시
+// -----------------------------------------------------------------------------
+// 운영자가 자신의 서버에 배포하는 예시 프록시입니다. 브라우저(정적 사이트)는
+// {task,payload} 만 이 프록시로 보내고, 프록시가 서버 측 API 키로 Claude 를
+// 호출한 뒤 텍스트를 스트리밍으로 되돌려줍니다.
+//
+// 🔒 API 키는 오직 서버(process.env.ANTHROPIC_API_KEY)에만 존재합니다.
+//    브라우저나 리포지토리에는 절대 키를 두지 않습니다.
+//
+// ⚠️ 이 리포지토리(데모/CI)에서는 절대 실행하지 마세요. 키가 있는 운영 환경에서만
+//    `npm install && npm start` 로 구동합니다. (CI 는 node --check 문법 검사만 수행)
+//
+// 실행:
+//   cd server && npm install
+//   ANTHROPIC_API_KEY=... npm start
+// 그런 다음 ai/config.js 의 AI_ENDPOINT 를 "http://<host>:<port>/api/ai" 로 지정.
+// -----------------------------------------------------------------------------
+
+import http from "node:http";
+import Anthropic from "@anthropic-ai/sdk";
+
+const PORT = Number(process.env.PORT) || 8787;
+const MODEL = "claude-opus-5";
+// CORS: 정적 사이트 출처. 기본은 개발 편의를 위한 "*" (운영 시 특정 출처로 제한 권장).
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error(
+    "[server] ANTHROPIC_API_KEY 가 설정되지 않았습니다. 서버 측 환경변수로 키를 제공하세요.\n" +
+      "         이 프록시는 키가 있는 운영 환경에서만 실행합니다."
+  );
+  process.exit(1);
+}
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const DISCLAIMER =
+  "모든 답변은 의학적 조언이 아니라 규칙 기반 데모 데이터에 근거한 참고 정보임을 명확히 하고, " +
+  "복용 전 의사·약사 등 전문가 상담을 반드시 권고한다.";
+
+// task 별 시스템 프롬프트 + 사용자 메시지 구성 (payload 데이터에 grounding).
+function buildPrompt(task, payload = {}) {
+  const data = JSON.stringify(payload);
+  switch (task) {
+    case "chat":
+      return {
+        system:
+          "너는 '메딕스(Medix)' 영양제 셀렉트샵의 상담 도우미다. 사용자의 자연어 질문에 대해 " +
+          "제공된 제품 데이터(products)와 설문(survey)에만 근거해 친절한 한국어로 접근 방식을 안내한다. " +
+          "데이터에 없는 제품/효능을 지어내지 않는다. " +
+          DISCLAIMER,
+        user:
+          "다음 JSON 은 사용자의 질문(question), 제품 목록(products), 선택적 설문(survey)이다. " +
+          "질문 의도에 맞는 목적을 추정하고, 데이터 내 제품으로 접근 방식을 3가지 이하로 제안하라.\n\n" +
+          data,
+      };
+    case "stack":
+      return {
+        system:
+          "너는 '메딕스(Medix)'의 추천 설명 도우미다. 규칙 기반 추천 엔진이 고른 조합(picks)과 그 근거(reasons)를 " +
+          "일반 사용자가 이해하기 쉬운 친근한 한국어 설명으로 풀어 준다. 데이터 밖의 주장을 추가하지 않는다. " +
+          DISCLAIMER,
+        user:
+          "다음 JSON 은 설문(survey)과 제품 목록(products)이다. 설문에 맞는 맞춤 스택을 " +
+          "각 제품이 왜 뽑혔는지 포함해 자연어로 설명하라.\n\n" +
+          data,
+      };
+    case "interactions":
+      return {
+        system:
+          "너는 '메딕스(Medix)'의 성분 안전 안내 도우미다. 장바구니 제품들의 성분 중복·상한 초과·상호작용을 " +
+          "제공된 데이터에만 근거해 쉬운 한국어로 설명하고, 시간 분리 섭취 등 현실적인 주의사항을 덧붙인다. " +
+          "과장하거나 진단하지 않는다. " +
+          DISCLAIMER,
+        user:
+          "다음 JSON 은 장바구니 제품(cartProducts)과 영양성분 참조표(nutrients)다. " +
+          "중복/과다/상호작용을 사용자 눈높이로 설명하고 대응 방법을 알려 주라.\n\n" +
+          data,
+      };
+    default:
+      return {
+        system: "너는 도움이 되는 한국어 도우미다. " + DISCLAIMER,
+        user: "다음 요청을 처리하라:\n\n" + data,
+      };
+  }
+}
+
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", (c) => {
+      raw += c;
+      if (raw.length > 1_000_000) reject(new Error("payload too large"));
+    });
+    req.on("end", () => resolve(raw));
+    req.on("error", reject);
+  });
+}
+
+const server = http.createServer(async (req, res) => {
+  setCors(res);
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    return res.end();
+  }
+  if (req.method === "GET" && req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    return res.end(JSON.stringify({ ok: true, model: MODEL }));
+  }
+  if (req.method !== "POST" || (req.url || "").split("?")[0] !== "/api/ai") {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("Not Found");
+  }
+
+  let task, payload;
+  try {
+    const body = JSON.parse((await readBody(req)) || "{}");
+    task = body.task;
+    payload = body.payload || {};
+  } catch {
+    res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("잘못된 JSON 요청입니다.");
+  }
+
+  const { system, user } = buildPrompt(task, payload);
+
+  try {
+    res.writeHead(200, {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store",
+    });
+    // 스트리밍: 긴 입력/출력에서도 타임아웃을 피하고 토큰을 즉시 흘려보낸다.
+    const stream = client.messages.stream({
+      model: MODEL,
+      max_tokens: 2048,
+      thinking: { type: "adaptive" },
+      system,
+      messages: [{ role: "user", content: user }],
+    });
+    stream.on("text", (delta) => res.write(delta));
+    await stream.finalMessage();
+    res.end();
+  } catch (err) {
+    console.error("[server] Claude 호출 실패:", err);
+    if (!res.headersSent) {
+      res.writeHead(502, { "Content-Type": "text/plain; charset=utf-8" });
+    }
+    res.end("\n[AI 오류] 잠시 후 다시 시도해 주세요.");
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(`[server] AI 프록시 실행 중: http://localhost:${PORT}/api/ai (model=${MODEL})`);
+});

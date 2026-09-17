@@ -64,6 +64,46 @@
 3. **성분 쌍 상호작용** — 사전 정의 쌍(예: 칼슘+철분 흡수, 멜라토닌+GABA 진정)이 함께
    담기면 문서화된 경고 표시.
 
+## 🤖 AI 기능 (API 연동)
+
+메딕스에는 **선택적·플러그러블 AI 레이어**가 포함되어 있으며 3가지 기능을 제공합니다.
+
+1. **AI 영양 상담 챗봇** (`#/ai`) — 건강 목적을 자연어로 물으면 카탈로그 데이터에 근거한
+   접근 방식을 안내합니다. **의학적 조언이 아니며, 전문가와 상담하세요.**
+2. **설문 → 맞춤 스택 설명** — 추천 엔진이 고른 조합을 친근한 자연어 설명으로 풀어 줍니다
+   (추천 결과 → “🤖 AI 맞춤 설명”).
+3. **성분 상호작용 자연어 경고** — 장바구니의 중복·과다·상호작용 경고를 쉬운 한국어와
+   현실적인 주의사항으로 설명합니다 (장바구니 → “🤖 AI 경고 설명”).
+
+**라이브 데모는 내장 Mock으로 바로 동작합니다**(`ai/config.js`의 `AI_ENDPOINT = ""`).
+Mock은 오프라인·결정론적이며 **실제 `recommender.js` / `interactions.js` 엔진을 재사용**하므로
+답변이 앱의 데이터에 근거합니다.
+
+### 실제 Claude 연동 (운영자)
+
+[`server/`](./server/README.md)의 **참조용 프록시**를 운영자 서버에 배포하고 사이트가 그
+주소를 바라보게 합니다. 브라우저는 `{task, payload}`만 보내고, 프록시가 **서버 측 키**로
+Claude를 호출한 뒤 텍스트를 스트리밍으로 되돌려줍니다.
+
+```bash
+cd server && npm install
+cp .env.example .env          # .env 에 키 입력 (커밋 금지)
+ANTHROPIC_API_KEY=... npm start
+```
+
+```js
+// ai/config.js — 배포한 프록시 주소 지정 (빈 문자열이면 내장 Mock)
+export const AI_ENDPOINT = "https://your-proxy.example.com/api/ai";
+```
+
+프록시는 `@anthropic-ai/sdk`, 모델 **`claude-opus-5`**, adaptive thinking, 스트리밍을
+사용합니다(`server/index.mjs`).
+
+> **🔒 키는 서버 측에만 둡니다.** API 키는 프록시의 `ANTHROPIC_API_KEY` 환경변수에만
+> 존재하며, 브라우저·정적 번들·URL·리포지토리에는 절대 두지 않습니다. `check.mjs`가 키
+> 커밋 여부를 검사합니다. 이 리포지토리/CI 안에서는 프록시를 실행하지 마세요(CI는
+> `node --check` 문법 검사만 하며 API 호출은 없습니다).
+
 ## 로컬 실행
 
 빌드 필요 없음. ES 모듈은 `file://`이 아니라 `http://`가 필요합니다.
@@ -79,8 +119,9 @@ python -m http.server 8995
 node check.mjs
 ```
 
-`check.mjs`(CI 사용)는 모든 JSON 파싱, 전체 JS `node --check`, `index.html` 필수 컨테이너,
-그리고 **두 엔진 단위 테스트**(설문→기대 추천, 성분 중복→경고 발생)를 수행합니다.
+`check.mjs`(CI 사용)는 모든 JSON 파싱, 전체 JS `node --check`(`ai/`·`server/` 포함),
+`index.html` 필수 컨테이너, **두 엔진 단위 테스트**(설문→기대 추천, 성분 중복→경고 발생),
+그리고 **AI-KIT 검증**(`AI_ENDPOINT` 기본 빈 값, **키 미커밋**)을 수행합니다.
 CI: `.github/workflows/ci.yml`.
 
 ## 🔒 데모 모드 경계 (중요)
@@ -106,9 +147,12 @@ js/app.js             # SPA: 라우팅·카탈로그·상세·설문·장바구�
 js/recommender.js     # 추천 엔진(점수화·설명 가능)
 js/interactions.js    # 중복/과다/상호작용 엔진
 js/storage.js         # localStorage 래퍼(try/catch + 초기화)
+ai/config.js          # AI_ENDPOINT 스위치("" 이면 내장 Mock)
+ai/ai.js              # askAI(task,payload) — Mock ↔ 실제 프록시, task id
+server/               # 참조용 Claude 프록시(운영자가 키로 배포)
 data/supplements.json # 허구 영양제 38종(성분 + 일일량)
 data/nutrients.json   # 영양성분 참조표(RDA/UL) — 게이지·점검용
-check.mjs             # CI 검증 + 엔진 단위 테스트
+check.mjs             # CI 검증 + 엔진 단위 테스트 + AI-KIT 검증
 .github/workflows/ci.yml
 ```
 

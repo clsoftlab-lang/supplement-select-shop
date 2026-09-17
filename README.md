@@ -70,6 +70,46 @@ checks run against `data/nutrients.json`:
 3. **Pair interactions** — predefined ingredient pairs (e.g. 칼슘+철분 absorption, 멜라토닌+GABA
    sedation) trigger a documented warning when both are in the cart.
 
+## 🤖 AI 기능 (API 연동)
+
+Medix ships an **optional, pluggable AI layer** with three features:
+
+1. **AI 영양 상담 챗봇** (`#/ai`) — ask goals in natural language → a recommended approach,
+   grounded in the catalog data. **This is NOT medical advice — consult a professional.**
+2. **설문 → 맞춤 스택 설명** — turns the recommender's picks into a friendly natural-language
+   explanation (survey result → "🤖 AI 맞춤 설명").
+3. **성분 상호작용 자연어 경고** — explains the cart's overlap / over-amount / interaction
+   warnings in plain Korean with practical cautions (cart → "🤖 AI 경고 설명").
+
+**The live demo works out of the box via a built-in mock** (`AI_ENDPOINT = ""` in
+`ai/config.js`). The mock is offline and deterministic, and **reuses the real
+`recommender.js` / `interactions.js` engines**, so answers are grounded in the app's own data.
+
+### Enable real Claude (operator)
+
+Deploy the **reference proxy** in [`server/`](./server/README.md) on your own server and point
+the site at it. The browser only ever sends `{task, payload}`; the proxy calls Claude with a
+server-side key and streams the text back.
+
+```bash
+cd server && npm install
+cp .env.example .env          # put your key in .env (never committed)
+ANTHROPIC_API_KEY=... npm start
+```
+
+```js
+// ai/config.js — point at your deployed proxy (empty string ⇒ built-in mock)
+export const AI_ENDPOINT = "https://your-proxy.example.com/api/ai";
+```
+
+The proxy uses `@anthropic-ai/sdk` with model **`claude-opus-5`**, adaptive thinking, and
+streaming (`server/index.mjs`).
+
+> **🔒 KEYS ARE SERVER-SIDE ONLY.** The API key lives **only** in the proxy's
+> `ANTHROPIC_API_KEY` environment variable — never in the browser, the static bundle, a URL,
+> or this repository. `check.mjs` enforces that no key is committed. Do **not** run the proxy
+> inside this repo/CI (CI only runs `node --check` on it — no API calls).
+
 ## Run locally
 
 No build step. Serve the folder over HTTP (ES modules need `http://`, not `file://`):
@@ -85,9 +125,11 @@ python -m http.server 8995
 node check.mjs
 ```
 
-`check.mjs` (used by CI) parses all JSON, runs `node --check` on every JS file, asserts the
-required `index.html` containers, and **unit-tests both engines** (survey → expected picks;
-overlapping ingredients → warning triggered). CI: `.github/workflows/ci.yml`.
+`check.mjs` (used by CI) parses all JSON, runs `node --check` on every JS file (including
+`ai/` + `server/`), asserts the required `index.html` containers, **unit-tests both engines**
+(survey → expected picks; overlapping ingredients → warning triggered), and verifies the
+**AI-KIT** (`AI_ENDPOINT` empty by default; **no API key committed anywhere**).
+CI: `.github/workflows/ci.yml`.
 
 ## 🔒 DEMO-MODE boundaries
 
@@ -112,9 +154,12 @@ js/app.js             # SPA: routing, catalog, detail, survey, cart, routine
 js/recommender.js     # recommendation engine (scored, explainable)
 js/interactions.js    # overlap / over-amount / pair-interaction engine
 js/storage.js         # localStorage wrapper (try/catch + reset)
+ai/config.js          # AI_ENDPOINT switch ("" ⇒ built-in mock)
+ai/ai.js              # askAI(task,payload) — mock ↔ real proxy, task ids
+server/               # REFERENCE Claude proxy (operator deploys with their key)
 data/supplements.json # 38 fictional supplements (ingredients + daily amounts)
 data/nutrients.json   # nutrient reference (RDA / UL) for gauges & checks
-check.mjs             # CI checks + engine unit tests
+check.mjs             # CI checks + engine unit tests + AI-KIT checks
 .github/workflows/ci.yml
 ```
 

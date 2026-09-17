@@ -7,6 +7,7 @@
 import { recommend } from "./recommender.js";
 import { analyzeCart } from "./interactions.js";
 import store from "./storage.js";
+import { askAI, TASKS } from "../ai/ai.js";
 
 // ---------------------------------------------------------------- 상태
 const state = {
@@ -115,6 +116,7 @@ function router() {
     catalog: renderCatalog,
     product: () => renderDetail(arg),
     survey: renderSurvey,
+    ai: renderAiChat,
     cart: renderCart,
     routine: renderRoutine,
     wish: renderWish,
@@ -380,11 +382,20 @@ function showRecommendation(survey) {
         )
         .join("")}
     </div>
-    <button class="btn" id="add-all">추천 전체 담기</button>
+    <div class="rec-actions">
+      <button class="btn" id="add-all">추천 전체 담기</button>
+      <button class="btn ghost" id="ai-explain">🤖 AI 맞춤 설명</button>
+    </div>
+    <div id="ai-stack" class="ai-out" hidden></div>
     <p class="fine">※ 규칙 기반 추천이며 의학적 조언이 아닙니다. 복용 전 전문가와 상담하세요.</p>`;
   $("#add-all").addEventListener("click", () => {
     picks.forEach((x) => addToCart(x.product.id, 1));
     location.hash = "#/cart";
+  });
+  $("#ai-explain").addEventListener("click", (e) => {
+    const out = $("#ai-stack");
+    out.hidden = false;
+    runAiInto(TASKS.STACK, { survey, products: state.products }, out, e.currentTarget);
   });
 }
 
@@ -433,6 +444,8 @@ function renderCart() {
         <div id="cart-warnings" class="panel">
           <h2>성분 안전 체크</h2>
           ${warningBlock(analysis)}
+          <button class="btn ghost small" id="ai-warn-btn">🤖 AI 경고 설명</button>
+          <div id="ai-warn" class="ai-out" hidden></div>
         </div>
         <div class="panel">
           <h2>일일 성분 합산</h2>
@@ -473,6 +486,13 @@ function renderCart() {
   if (sub) sub.addEventListener("change", (e) => { state.subscribe = e.target.checked; persist(); renderCart(); });
   const co = $("#checkout");
   if (co) co.addEventListener("click", () => checkout(items, total));
+  const aiWarn = $("#ai-warn-btn");
+  if (aiWarn)
+    aiWarn.addEventListener("click", (e) => {
+      const out = $("#ai-warn");
+      out.hidden = false;
+      runAiInto(TASKS.INTERACTIONS, { cartProducts: items, nutrients: state.nutrients }, out, e.currentTarget);
+    });
 }
 
 function changeQty(id, delta) {
@@ -576,6 +596,84 @@ function renderSubscribe() {
     </ul>
     <a class="btn" href="#/cart">장바구니에서 구독 켜기</a>
     <p class="fine">※ 실제 결제/구독/배송이 발생하지 않습니다.</p></section>`;
+}
+
+// ---------------------------------------------------------------- AI 기능
+// askAI 호출 결과를 대상 요소에 스트리밍(textContent, XSS 안전)으로 채운다.
+async function runAiInto(task, payload, targetEl, btn) {
+  if (!targetEl) return;
+  targetEl.textContent = "생각 중…";
+  targetEl.classList.add("ai-streaming");
+  if (btn) btn.disabled = true;
+  let first = true;
+  try {
+    await askAI(task, payload, {
+      onToken: (t) => {
+        if (first) { targetEl.textContent = ""; first = false; }
+        targetEl.textContent += t;
+      },
+    });
+  } catch (e) {
+    targetEl.textContent = "AI 응답을 가져오지 못했어요: " + (e && e.message ? e.message : e);
+  } finally {
+    targetEl.classList.remove("ai-streaming");
+    if (btn) btn.disabled = false;
+  }
+}
+
+// (1) AI 영양 상담 챗봇
+function renderAiChat() {
+  const main = $("#view");
+  main.innerHTML = `
+  <section id="view-ai">
+    <h1>🤖 AI 영양 상담</h1>
+    <p class="lead">건강 목적을 자연어로 물어보세요. 예: “요즘 피로하고 잠을 잘 못 자요, 뭘 챙기면 좋을까요?”</p>
+    <div id="ai-log" class="ai-log" aria-live="polite"></div>
+    <form id="ai-form" class="ai-form">
+      <input id="ai-q" class="input" type="text" autocomplete="off"
+        placeholder="궁금한 점을 입력하세요 (예: 면역과 눈 건강을 같이 챙기고 싶어요)" required />
+      <button class="btn" type="submit">질문</button>
+    </form>
+    <div class="ai-examples">
+      ${["요즘 너무 피로하고 잠을 못 자요", "면역과 눈 건강을 같이 챙기고 싶어요", "관절이 안 좋은데 뭐가 좋을까요"]
+        .map((q) => `<button type="button" class="chip" data-ai-ex="${esc(q)}">${esc(q)}</button>`)
+        .join("")}
+    </div>
+    <p class="fine">🤖 AI 응답은 기본적으로 내장 Mock(오프라인·결정론)으로 생성됩니다. 규칙 엔진 데이터에 근거하며 <b>의학적 조언이 아닙니다</b>.</p>
+  </section>`;
+
+  const log = $("#ai-log");
+  const input = $("#ai-q");
+
+  async function ask(question) {
+    const q = String(question || "").trim();
+    if (!q) return;
+    const userEl = document.createElement("div");
+    userEl.className = "ai-bubble ai-user";
+    userEl.textContent = q;
+    log.appendChild(userEl);
+    const botEl = document.createElement("div");
+    botEl.className = "ai-bubble ai-bot";
+    log.appendChild(botEl);
+    log.scrollTop = log.scrollHeight;
+    await runAiInto(
+      TASKS.CHAT,
+      { question: q, products: state.products, survey: state.survey },
+      botEl,
+      $("#ai-form button")
+    );
+    log.scrollTop = log.scrollHeight;
+  }
+
+  $("#ai-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = input.value;
+    input.value = "";
+    ask(q);
+  });
+  main.querySelectorAll("[data-ai-ex]").forEach((b) =>
+    b.addEventListener("click", () => ask(b.getAttribute("data-ai-ex")))
+  );
 }
 
 // ---------------------------------------------------------------- 배지/전역

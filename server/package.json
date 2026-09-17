@@ -1,0 +1,17 @@
+{
+  "name": "medix-ai-proxy",
+  "version": "1.0.0",
+  "description": "메딕스(Medix) 참조용 AI 프록시 — 서버 측 키로 Claude 를 호출하고 텍스트를 스트리밍합니다. (운영자 배포용)",
+  "type": "module",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0"
+  }
+}

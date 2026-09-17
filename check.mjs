@@ -11,6 +11,7 @@ import { join, dirname, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommend, scoreProduct } from "./js/recommender.js";
 import { analyzeCart } from "./js/interactions.js";
+import { AI_ENDPOINT } from "./ai/config.js";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 let pass = 0, fail = 0;
@@ -141,6 +142,39 @@ const P = (id) => products.find((p) => p.id === id);
   const g = a.totals.find((t) => t.name === "L-글루타민");
   assert(g && g.total === 6000, "servingPerDay 반영한 일일 합산(6000mg)");
 }
+
+// 7) AI-KIT 검증 -------------------------------------------------------------
+console.log("\n[7] AI-KIT (ai/ + server/)");
+
+// (a) ai/ 와 server/ 의 JS 를 node --check 로 명시적 문법 검사
+for (const f of [
+  join(ROOT, "ai", "config.js"),
+  join(ROOT, "ai", "ai.js"),
+  join(ROOT, "server", "index.mjs"),
+]) {
+  try {
+    execSync(`node --check "${f}"`, { stdio: "pipe" });
+    ok(`문법: ${f.replace(ROOT, "").replace(/\\/g, "/")}`);
+  } catch (e) { bad(`문법: ${f}`, String(e.stderr || e.message).slice(0, 200)); }
+}
+
+// (b) 데모 기본값: AI_ENDPOINT 는 빈 문자열(=내장 Mock 사용)이어야 한다
+assert(AI_ENDPOINT === "", 'AI_ENDPOINT 기본값 빈 문자열("") = Mock 모드');
+
+// (c) 리포지토리 어디에도 실제 키/키 접두사가 없어야 한다
+//     (self-match 방지를 위해 접두사 문자열을 분할 구성)
+const KEY_PREFIX = "sk-" + "ant";
+const REAL_KEY_RE = new RegExp(KEY_PREFIX + "-[A-Za-z0-9_-]{8,}");
+let leaked = null;
+for (const f of files.filter((f) => ![".png", ".jpg", ".jpeg", ".gif", ".ico", ".woff", ".woff2"].includes(extname(f)))) {
+  let text;
+  try { text = readFileSync(f, "utf8"); } catch { continue; }
+  if (text.includes(KEY_PREFIX) || REAL_KEY_RE.test(text)) {
+    leaked = f.replace(ROOT, "").replace(/\\/g, "/");
+    break;
+  }
+}
+assert(leaked === null, leaked ? `키 노출 발견: ${leaked}` : `하드코딩된 API 키/접두사 없음`);
 
 // 결과 -----------------------------------------------------------------------
 console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);
